@@ -1,0 +1,39 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Editor temp files
+*.swp
+*~
+.vscode/
+.idea/
+
+# Local dev / test files
+*.local.html
+*.test.html
+*.bak
+*.orig
+
+# Node (if you ever run anything locally)
+node_modules/
+npm-debug.log
+
+# Wrangler (Cloudflare Worker CLI — if you ever use it locally)
+.wrangler/
+.dev.vars
+
+# Measurement data (may contain GPS and timestamps)
+*.csv
+Planum_*.jpg
+MeasureUp_*.jpg
+GLM_*.jpg
+Meter_*.jpg
+
+# Secrets
+.env
