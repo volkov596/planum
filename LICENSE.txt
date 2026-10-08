@@ -1,0 +1,24 @@
+Planum
+Copyright (c) 2026 Egor Volkov. All rights reserved.
+
+Use of the app
+You may use the Planum web app, as published at https://volkov596.github.io/planum/,
+free of charge, for any purpose, including commercial work.
+
+Source code
+The source code in this repository is not open source. You may not copy, modify,
+redistribute, sublicense or sell it, in whole or in part, without the author's
+prior written permission. To ask for permission, contact egor.volkov@tuta.io.
+
+Data
+Files you create with the app (photos, CSV exports) belong to you.
+
+No warranty
+The app and code are provided "as is", without warranty of any kind, express or
+implied, including fitness for a particular purpose. The app is experimental and
+not validated for survey, compliance or quality-assurance work. The author is not
+liable for any loss or damage arising from its use.
+
+Trademarks
+Planum is an independent project, not affiliated with or endorsed by Robert Bosch
+GmbH. Bosch and GLM are trademarks of their respective owners.
