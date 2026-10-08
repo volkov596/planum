@@ -70,13 +70,13 @@ details.sub2 .toggle{font-size:15px}
   text-align:left;color:rgba(230,239,233,.6);font-size:13.5px;line-height:1.45}
 .vnote>div{max-height:100%;overflow-y:auto;overscroll-behavior:contain}
 details.phelp{margin:2px 0 6px}
+.hint.one{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 details.phelp summary{min-height:28px;font-weight:400;display:flex;gap:6px;list-style:none;cursor:pointer}
 details.phelp summary::-webkit-details-marker{display:none}
 details.phelp .h1{flex:1;min-width:0}
 details.phelp:not([open]) .h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 details.phelp .hm{flex:none;color:var(--brand);font-weight:700}
 details.phelp .hm::after{content:'more'} details.phelp[open] .hm::after{content:'less'}
-details.phelp>div{margin-top:-2px}
 .vnote b{color:rgba(230,239,233,.85)}
 .view .empty{position:absolute;inset:0;display:grid;place-items:center;color:#cfd8d2;text-align:center;padding:16px;font-size:14px}
 .cross{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;pointer-events:none}
@@ -303,7 +303,7 @@ dialog.about::backdrop{background:rgba(0,0,0,.55)}
         <button class="ibtn top camre" id="btnCamRe" aria-label="Restart camera" title="Restart camera">⟳</button>
       </div>
       <p class="hint" id="hint"></p>
-      <p class="hint" id="lastPhoto"></p>
+      <p class="hint one" id="lastPhoto"></p>
       <ul class="log" id="log"></ul>
       <div class="row">
         <button class="btn" id="btnCsv">Export CSV</button>
@@ -318,7 +318,7 @@ dialog.about::backdrop{background:rgba(0,0,0,.55)}
       </details>
     </section>
     <section role="tabpanel" id="panProfile" aria-labelledby="tabProfile" hidden>
-        <details class="help phelp" id="profHelp"><summary><span class="h1">Level mode, meter on the carriage.</span><span class="hm"></span></summary><div>1 <b>Calibrate zero</b>. 2 <b>Start profile</b> and walk: place the carriage, let go, hold still; a beep means the step is saved. 3 <b>Return walk</b> over the same marks. 4 <b>Calibrate zero</b> again.</div></details>
+        <details class="help phelp" id="profHelp"><summary><span class="h1">Level mode, meter on the carriage. 1 <b>Calibrate zero</b>. 2 <b>Start profile</b> and walk: place the carriage, let go, hold still; a beep means the step is saved. 3 <b>Return walk</b> over the same marks. 4 <b>Calibrate zero</b> again.</span><span class="hm"></span></summary></details>
         <div class="row" id="profBtns"><button class="btn" id="btnProfRec" disabled hidden>Record step</button><button class="btn" id="btnProfUndo" disabled hidden>Undo step</button><button class="btn" id="btnProfRet" disabled>Return walk</button><button class="btn" id="btnZero" disabled>Calibrate zero</button></div>
         <div class="help" id="profRetHint" hidden></div>
         <div class="help" id="zeroStat"></div>
@@ -349,18 +349,18 @@ dialog.about::backdrop{background:rgba(0,0,0,.55)}
             <label class="f">Readings averaged<input autocomplete="off" id="prN" type="number" inputmode="numeric" step="1" min="1" max="10"></label>
             <label class="f">Max slope, °<input autocomplete="off" id="prMax" type="number" inputmode="decimal" step="0.5" min="0.5"></label>
             <label class="f">Tilt warning, °<input autocomplete="off" id="prTiltW" type="number" inputmode="decimal" step="0.5" min="0"></label>
-            <label class="f">Zero check: placements per side<input autocomplete="off" id="prZN" type="number" inputmode="numeric" step="1" min="2" max="20"></label>
+            <label class="f">Zero placements/side<input autocomplete="off" id="prZN" type="number" inputmode="numeric" step="1" min="2" max="20"></label>
           </div>
           <div class="toggles">
             <label class="toggle"><input autocomplete="off" type="checkbox" id="prSound"> Beep</label>
             <label class="toggle"><input autocomplete="off" type="checkbox" id="prVib"> Vibrate</label>
             <label class="toggle"><input autocomplete="off" type="checkbox" id="prAuto"> Save CSV automatically</label>
           </div>
-          <p class="help"><b>Movement:</b> angle change that starts a new step (side tilt is ignored). <b>Steady within:</b> how closely readings must agree (meter step 0.014°). <b>Max slope:</b> steady readings steeper than this are ignored (carriage lifted). <b>Tilt warning:</b> side tilt that flags a step (0 = off). <b>Zero check placements:</b> per side (5 is a good balance). <b>Undo step</b> deletes the last step; <b>Record step</b> appears when a step can't settle within 10 s.</p>
+          <p class="help"><b>Movement:</b> angle change that starts a new step (side tilt is ignored). <b>Steady within:</b> how closely readings must agree (meter step 0.014°). <b>Max slope:</b> steady readings steeper than this are ignored (carriage lifted). <b>Tilt warning:</b> side tilt that flags a step (0 = off). <b>Zero placements/side:</b> placements each way in a zero check (5 is a good balance). <b>Undo step</b> deletes the last step; <b>Record step</b> appears when a step can't settle within 10 s.</p>
         </details>
     </section>
     <section role="tabpanel" id="panScan" aria-labelledby="tabScan" hidden>
-        <details class="help phelp" id="scanHelp"><summary><span class="h1">Single distance mode, meter square to the surface.</span><span class="hm"></span></summary><div>Any direction works: down, up or sideways. Don't press the meter's buttons during a scan. About 2.5 readings/s (50-27 CG) or 1.2/s (100-25 C, also stored on the meter).</div></details>
+        <details class="help phelp" id="scanHelp"><summary><span class="h1">Single distance mode, meter square to the surface. Any direction works: down, up or sideways. Don't press the meter's buttons during a scan. About 2.5 readings/s (50-27 CG) or 1.2/s (100-25 C, also stored on the meter).</span><span class="hm"></span></summary></details>
         <div class="sv" id="sv" hidden>
           <div class="head"><b id="svTitle"></b><button class="btn sm" id="svClose">Close</button></div>
           <div class="svopts">
@@ -805,7 +805,7 @@ ${desc}
 <script>
 (function(){
 const $ = id => document.getElementById(id);
-const VERSION = '0.24.0';
+const VERSION = '0.24.1';
 const S = { dev:null, ch:null, connected:false, laser:false, mode:null, lastBeat:0, busy:false,
   pending:null, meter:null, infoWait:null, stream:null, pitch:null, roll:null, gps:null, gpsWatch:null, wake:null, wantConnected:false };
 const parser = new GLM.Parser();
@@ -1299,7 +1299,7 @@ function markCanvas(c){
 }
 function showLastPhoto(){
   const lp=store.get('lastPhoto', null), el=$('lastPhoto');
-  el.textContent = lp ? `Last photo: ${lp.w}×${lp.h}, ${lp.src}` + (lp.ms!=null ? `, ready ${(lp.ms/1000).toFixed(1)} s after the reading` : '') : '';
+  el.textContent = lp ? `Last photo: ${lp.w}×${lp.h} · ${lp.src}` + (lp.ms!=null ? ` · ${(lp.ms/1000).toFixed(1)} s` : '') : '';
 }
 function setLastPhoto(w,h,src,ms){ store.set('lastPhoto',{w,h,src,ms}); showLastPhoto(); }
 function flash(){ const f=$('flash'); f.classList.add('go'); requestAnimationFrame(()=>requestAnimationFrame(()=>f.classList.remove('go'))); }
@@ -2424,7 +2424,7 @@ function applyCamMode(){
   $('lastPhoto').hidden = !on; bigButton();
   $('hint').textContent = !spot ? 'Photos are taken in Spot only.'
     : !cfg.photo ? 'Photos off: readings saved without photos.'
-    : full ? 'Full quality: Measure opens your camera app. Photograph the laser dot and confirm; the reading is taken as you return.'
+    : full ? 'Full quality: Measure opens the camera app. Shoot the dot and confirm; the reading follows.'
     : 'In browser: photo taken right after each reading. No camera-app processing, so lower quality.';
   $('camEmpty').textContent='Starting camera…'; $('camEmpty').hidden = !browserCam() || !!S.stream;
   viewNote();
@@ -2434,7 +2434,7 @@ function applyCamMode(){
 function viewNote(){
   const el=$('vnote'), full=cfg.source==='app';
   const d=document.createElement('div');
-  const help=id=>$(id).querySelector('.h1').innerHTML+' '+$(id).querySelector('div').innerHTML;
+  const help=id=>$(id).querySelector('.h1').innerHTML;
   if (S.tab==='profile') d.innerHTML=help('profHelp');
   else if (S.tab==='scan') d.innerHTML=help('scanHelp');
   else d.textContent = !cfg.photo ? 'Photo is off.' : full ? 'Press Measure to open the camera app.' : '';
