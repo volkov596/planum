@@ -122,7 +122,8 @@ body.t-spot .hud .sub{display:none}   /* Spot: number, type, angle and tilt are 
 .ibtn.top svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 /* tool tabs: Spot | Profile | Scan, full width */
 .tabs{width:100%;margin:2px 0 8px}
-.tabs button{flex:1;min-height:44px;font-size:16px;padding:0 6px;position:relative}
+.tabs button{flex:1 1 auto;min-height:44px;font-size:16px;padding:0 6px;position:relative}
+#dfBtns{flex-wrap:wrap} #dfBtns .btn{white-space:nowrap}
 .tabs .cnt{position:absolute;top:3px;right:7px;font-size:11px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
 .tabs button:disabled:not([aria-selected="true"]){opacity:.4}
 .ptitle{font-weight:700;min-height:32px;display:flex;align-items:center}
@@ -292,7 +293,7 @@ dialog.about::backdrop{background:rgba(0,0,0,.55)}
 
   <div class="more">
     <div class="segt tabs" role="tablist" aria-label="Tool">
-      <button role="tab" id="tabSpot" aria-selected="true" aria-controls="panSpot">Spot<span class="cnt" id="cntSpot"></span></button><button role="tab" id="tabProfile" aria-selected="false" aria-controls="panProfile">Profile<span class="cnt" id="cntProfile"></span></button><button role="tab" id="tabScan" aria-selected="false" aria-controls="panScan">Scan<span class="cnt" id="cntScan"></span></button>
+      <button role="tab" id="tabSpot" aria-selected="true" aria-controls="panSpot">Spot<span class="cnt" id="cntSpot"></span></button><button role="tab" id="tabProfile" aria-selected="false" aria-controls="panProfile">Profile<span class="cnt" id="cntProfile"></span></button><button role="tab" id="tabScan" aria-selected="false" aria-controls="panScan">Scan<span class="cnt" id="cntScan"></span></button><button role="tab" id="tabDefl" aria-selected="false" aria-controls="panDefl">Deflection<span class="cnt" id="cntDefl"></span></button>
     </div>
     <section role="tabpanel" id="panSpot" aria-labelledby="tabSpot">
       <div class="ctl">
@@ -402,6 +403,41 @@ dialog.about::backdrop{background:rgba(0,0,0,.55)}
           <p class="help">Keep the browser open, screen on. If Bluetooth drops, the scan carries on if it reconnects within 20 s. The sync-pulse setting applies to the 50-27 CG only.</p>
         </details>
     </section>
+    <section role="tabpanel" id="panDefl" aria-labelledby="tabDefl" hidden>
+        <details class="help phelp" id="deflHelp"><summary><span class="h1">Single distance mode, meter fixed off the structure, laser on one spot. Enter the laser angle in Deflection settings, then <b>Start</b>: warm-up, zero, then deflection (positive = down). Mark loads with <b>Load on</b> / <b>Load off</b>. Slow movement only: about 2.5 readings/s (50-27 CG) or 1.2/s (100-25 C).</span><span class="hm"></span></summary></details>
+        <p class="help" id="dfFactor"></p>
+        <div class="row" id="dfBtns" hidden><button class="btn" id="dfOn">Load on</button><button class="btn" id="dfOff">Load off</button><button class="btn" id="dfMark">Mark</button><button class="btn" id="dfZero">Zero now</button></div>
+        <div class="pstate" id="dfState" hidden><span class="pchip" id="dfChip">–</span><span id="dfLine"></span></div>
+        <div class="sv" id="dv" hidden>
+          <div class="head"><b id="dvTitle"></b><button class="btn sm" id="dvClose">Close</button></div>
+          <div class="svopts"><label class="toggle"><input autocomplete="off" type="checkbox" id="dvRaw"> Every reading</label><label class="toggle"><input autocomplete="off" type="checkbox" id="dvDrift"> Remove drift</label></div>
+          <div class="pvleg" id="dvLeg"></div>
+          <div class="svtip" id="dvTip">Touch the chart to read values.</div>
+          <div class="svchart" id="dvChart"><svg id="dvSvg" role="img" aria-label="Deflection against time"></svg></div>
+          <p class="help" id="dvNote"></p>
+        </div>
+        <ul class="log" id="dfList"></ul>
+        <div class="row">
+          <button class="btn" id="btnDfCsv">Export all</button>
+          <button class="btn" id="btnDfClear">Delete all</button>
+        </div>
+        <details class="sub2" id="dfSet">
+          <summary>Deflection settings</summary>
+          <div class="grid2">
+            <label class="f">Label<input autocomplete="off" id="dfLabel" type="text" maxlength="40" placeholder="optional"></label>
+            <label class="f">Laser angle, °<input autocomplete="off" id="dfTheta" type="number" inputmode="decimal" step="0.01" placeholder="from the meter"></label>
+            <label class="f">Laser<select autocomplete="off" id="dfDir" class="fsel"><option value="down">Down (top face)</option><option value="up">Up (soffit)</option></select></label>
+            <label class="f">Surface slope, %<input autocomplete="off" id="dfSlope" type="number" inputmode="decimal" step="0.1"></label>
+            <label class="f">Target<select autocomplete="off" id="dfTarget" class="fsel"><option value="surface">Surface</option><option value="plate">Plate square to beam</option></select></label>
+            <label class="f">Store<select autocomplete="off" id="dfStore" class="fsel"><option value="all">Every reading</option><option value="5">5 s median</option><option value="30">30 s median</option></select></label>
+            <label class="f">Warm-up, s<input autocomplete="off" id="dfWarm" type="number" inputmode="numeric" step="5" min="0"></label>
+            <label class="f">Zero over, s<input autocomplete="off" id="dfZw" type="number" inputmode="numeric" step="1" min="1"></label>
+            <label class="f">Stop after, min<input autocomplete="off" id="dfMax" type="number" inputmode="decimal" step="1" min="0.1"></label>
+          </div>
+          <div class="row"><label class="toggle"><input autocomplete="off" type="checkbox" id="dfAuto"> Save CSV automatically</label></div>
+          <p class="help"><b>Laser angle:</b> read it on the meter (level or indirect mode) with the meter in place, then switch back to single distance mode; a negative angle (pointing down) sets Laser to Down. <b>Surface slope:</b> of the surface the spot hits, along the laser's direction, positive = rising away from the meter; 0 = flat. Ignoring a slope s costs about s × cot(angle), e.g. 3% at 20° = 8%. <b>Plate:</b> a target fixed square to the beam: the spot doesn't slide and the slope doesn't matter. <b>Store:</b> one median per 5 or 30 s keeps long runs small. Deflection = distance change × the factor shown above; positive = down.</p>
+        </details>
+    </section>
     <div class="foot"><span class="wm">Planum</span><button class="ibtn" id="btnAbout" aria-label="About and support" title="About & support">i</button><button class="ibtn" id="btnSet" aria-label="App settings" title="App settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button><span class="chip">Experimental</span><span class="ver" id="ver"></span></div>
     <dialog class="about" id="setDlg" aria-labelledby="setTitle">
       <div class="ahead"><h2 id="setTitle">App settings</h2><button class="x" id="setClose" aria-label="Close">×</button></div>
@@ -413,12 +449,12 @@ dialog.about::backdrop{background:rgba(0,0,0,.55)}
     </dialog>
     <dialog class="about guide" id="guide" aria-labelledby="guideTitle">
       <div class="ahead"><h2 id="guideTitle">Guide</h2><button class="x" id="guideClose" aria-label="Close">×</button></div>
-      <p><b class="wm" style="font-size:17px">Planum</b> connects your phone to a Bosch laser meter over Bluetooth. Its main job: <b>take a photo and write the meter's distance and angle into the photo file</b>, so you can later measure from pixels in <a href="https://volkov596.github.io/markup/" target="_blank" rel="noopener">Markup</a> or <a href="https://volkov596.github.io/digitalcrackgauge/" target="_blank" rel="noopener">Digital Crack Gauge</a>. It also logs every reading, scans surface profiles with the meter on a slider, and records walking profiles with a two-foot carriage (dipstick). Everything stays on your phone. Tap a topic to open it.</p>
+      <p><b class="wm" style="font-size:17px">Planum</b> connects your phone to a Bosch laser meter over Bluetooth. Its main job: <b>take a photo and write the meter's distance and angle into the photo file</b>, so you can later measure from pixels in <a href="https://volkov596.github.io/markup/" target="_blank" rel="noopener">Markup</a> or <a href="https://volkov596.github.io/digitalcrackgauge/" target="_blank" rel="noopener">Digital Crack Gauge</a>. It also logs every reading, scans surface profiles with the meter on a slider, records walking profiles with a two-foot carriage (dipstick), and tracks how far a structure deflects over time. Everything stays on your phone. Tap a topic to open it.</p>
       <details><summary>Getting started</summary><div><ul>
         <li>Use <b>Chrome on an Android phone</b>.</li>
         <li>Switch the meter on and turn its Bluetooth on.</li>
         <li>Tap <b>Connect</b> and pick the meter in the list. The dot turns green and the meter's model shows at the top.</li>
-        <li>Pick a tab: <b>Spot</b> for single readings and photos, <b>Profile</b> for dipstick walks, <b>Scan</b> for slider scans. The big button follows the tab.</li>
+        <li>Pick a tab: <b>Spot</b> for single readings and photos, <b>Profile</b> for dipstick walks, <b>Scan</b> for slider scans, <b>Deflection</b> for movement of one spot over time. The big button follows the tab.</li>
         <li>In Spot, tap <b>Measure</b>: the app switches the laser on and takes the reading.</li>
         <li>If the link drops, the app reconnects by itself.</li></ul></div></details>
       <details><summary>Photos with measurements<span class="tag ok">main use</span></summary><div><ul>
@@ -459,13 +495,23 @@ dialog.about::backdrop{background:rgba(0,0,0,.55)}
         <li>Keep the app in front with the screen on: Chrome slows down in the background.</li>
         <li>Each scan is saved as a CSV file (automatic by default). <b>View</b> draws the profile; touch the chart to read values.</li>
         <li><b>Rail correction</b> removes the sag of one particular slider (the author's). Leave it off for any other setup.</li></ul></div></details>
+      <details><summary>Deflection<span class="tag maybe">new, unvalidated</span></summary><div><ul>
+        <li>Tracks how much a beam, slab or other structure moves at one spot over time, e.g. under a test load or through the day. The meter stays <b>off the structure</b> (tripod, pier, bank) with the laser on one spot.</li>
+        <li><b>Set up:</b> fix the meter rigidly (a tripod on concrete beats one on soil), aim at the spot and set <b>single distance mode</b>. Read the laser angle on the meter (level or indirect mode) without moving it, then switch back to single distance mode.</li>
+        <li>In <b>Deflection settings</b> enter the angle, whether the laser points <b>down</b> at a top face or <b>up</b> at a soffit, and the <b>surface slope</b> along the laser (0 = flat; positive = rising away from you). The line under the help shows how much the distance changes per mm of deflection and how far the spot slides.</li>
+        <li>Tap <b>Start</b> and keep your hands off: the meter warms up (60 s by default; its reading drifts by about 0.5 mm at first), then the app sets the zero over 10 s and beeps. From then on the big number is the deflection (median of the last 5 s, so someone walking through the beam doesn't count), <b>positive = down</b>.</li>
+        <li>Tap <b>Load on</b> and <b>Load off</b> when a load goes on and comes off, <b>Mark</b> for anything else, <b>Zero now</b> to start again from the current position. The chart shows each one.</li>
+        <li>At the end: the peak for each load, what is left after unloading, and the drift. <b>Remove drift</b> takes a straight line through the unloaded readings out of the chart; the CSV keeps both.</li>
+        <li><b>The spot slides</b> along the surface as it moves. On a flat face this is fully allowed for (bench test 7 Oct: within 0.5%, slope correction needed, about 1%). A bump or joint under the moving spot goes straight into the result: aim at a smooth patch, or fix a small plate square to the beam (Target: Plate).</li>
+        <li><b>Limits:</b> about 2.5 readings a second (1.2 on the 100-25 C), so slow movement only, not vibration. On a long, shallow shot the mount matters most: a tripod tilting by 0.01° looks like about 3.5 mm at 20 m. Results are indicative, not a certified load-test record.</li>
+        <li>Long runs: choose 5 s or 30 s in <b>Store</b> (one median per period), keep Planum in front with the screen on, and use a power bank. Each run is saved as a CSV (automatic by default).</li></ul></div></details>
       <details><summary>Readings and files</summary><div><ul>
         <li>The <b>Spot</b> tab lists what you've measured. They are stored in this phone's browser only (up to 3000).</li>
         <li><b>Export CSV</b> saves them as a file. <b>Clear log</b> deletes them from the phone; exported files and photos are not affected.</li>
-        <li>Scans and profiles are kept separately (last 20 each): Export or Delete each one.</li>
+        <li>Scans, profiles and deflection runs are kept separately (last 20 each): Export or Delete each one.</li>
         <li>Clearing Chrome's site data deletes everything stored here, so export regularly.</li></ul></div></details>
       <details><summary>Settings</summary><div><ul>
-        <li>Each tab has its own settings under its list: <b>Spot settings</b>, <b>Profile settings</b>, <b>Scan settings</b>.</li>
+        <li>Each tab has its own settings under its list: <b>Spot settings</b>, <b>Profile settings</b>, <b>Scan settings</b>, <b>Deflection settings</b>.</li>
         <li><b>Spot settings:</b> <b>Distance offset Z</b> moves readings to another reference point, such as the phone camera (the reading without offset is saved too); <b>GPS location</b>, saved with each reading; <b>photograph meter-button readings</b> (In browser only).</li>
         <li><b>App settings</b> (gear button at the bottom, next to i): the <b>file name prefix</b> for all saved files, and the <b>Bluetooth frame log</b>, a diagnostic record of the meter traffic for troubleshooting.</li>
         <li>Camera blocked? Tap the icon left of the address › Permissions › Camera › Allow, then tap <b>Photo</b>.</li></ul></div></details>
@@ -479,6 +525,7 @@ dialog.about::backdrop{background:rgba(0,0,0,.55)}
         <p class="small">No promises: these may or may not arrive.</p><ul>
         <li>Logging area, volume and trapezoid results.</li>
         <li>Floor flatness numbers (F<sub>F</sub>/F<sub>L</sub>) from dipstick profiles, and later road roughness.</li>
+        <li>Deflection: slow lean of a pole from the meter's tilt; vibration from the phone's own motion sensor.</li>
         <li>Readings triggered by distance from a wheel sensor, synced with phone or GoPro video.</li>
         <li>Surface texture from fine slider scans.</li></ul></div></details>
       <details><summary>Tips and limits</summary><div><ul>
@@ -489,7 +536,7 @@ dialog.about::backdrop{background:rgba(0,0,0,.55)}
     </dialog>
     <dialog class="about" id="about" aria-labelledby="aboutTitle">
       <div class="ahead"><h2 id="aboutTitle">About &amp; support</h2><button class="x" id="aboutClose" aria-label="Close">×</button></div>
-      <p><b class="wm" style="font-size:17px">Planum</b> — Bluetooth laser-meter logger for field work: readings, photos, slider scans and dipstick profiles from a Bosch GLM 50-27 CG or GLM 100-25 C. Private by design: everything stays on your device.</p>
+      <p><b class="wm" style="font-size:17px">Planum</b> — Bluetooth laser-meter logger for field work: readings, photos, slider scans, dipstick profiles and deflection over time from a Bosch GLM 50-27 CG or GLM 100-25 C. Private by design: everything stays on your device.</p>
       <p class="small">Experimental and unofficial: uses an undocumented meter protocol; not affiliated with or endorsed by Bosch.</p>
       <p>New here? <a href="#" id="aboutGuide">Open the Guide</a> (also the ? button at the top).</p>
       <h3>Author</h3>
@@ -805,7 +852,7 @@ ${desc}
 <script>
 (function(){
 const $ = id => document.getElementById(id);
-const VERSION = '0.24.1';
+const VERSION = '0.25.1';
 const S = { dev:null, ch:null, connected:false, laser:false, mode:null, lastBeat:0, busy:false,
   pending:null, meter:null, infoWait:null, stream:null, pitch:null, roll:null, gps:null, gpsWatch:null, wake:null, wantConnected:false };
 const parser = new GLM.Parser();
@@ -832,7 +879,7 @@ const cfg = Object.assign({z:0,prefix:'Planum',photo:false,gps:false,devPhoto:tr
 if (cfg.prefix==='MeasureUp') cfg.prefix='Planum';                 // v0.21.0 rebrand: the old default follows; a custom prefix is kept
 delete cfg.wm; delete cfg.rframes;
 rframes = store.get('rframes', []);
-S.tab = 'spot';                                   // tool tab: 'spot' | 'profile' | 'scan'; the app always opens on Spot
+S.tab = 'spot';                                   // tool tab: 'spot' | 'profile' | 'scan' | 'defl'; the app always opens on Spot
 document.body.classList.add('t-spot');
 const photoOn = () => cfg.photo && S.tab==='spot';  // photos only in Spot; Profile and Scan switch them off (and the camera)
 const browserCam = () => photoOn() && cfg.source==='browser';
@@ -861,7 +908,7 @@ function status(){
     $('btnConnect').textContent='Connect'; scanButtons(); return; }
   const quiet = Date.now()-S.lastBeat > 5000;
   dot.className = 'dot ' + (quiet?'warn':'on');
-  $('stTitle').textContent = quiet ? 'Connected, no signal' : SC.on ? 'Scanning' : PR.on ? 'Profiling' : 'Connected';
+  $('stTitle').textContent = quiet ? 'Connected, no signal' : SC.on ? (SC.cur && SC.cur.kind==='defl' ? 'Deflection' : 'Scanning') : PR.on ? 'Profiling' : 'Connected';
   const SHORT={1:'Distance',2:'Continuous',8:'Level/angle',10:'Indirect height',11:'Indirect length'};     // short names: the line must fit ~32 characters
   const mode = S.mode!=null ? (SHORT[S.mode]||('mode '+S.mode)) : 'mode ?';
   $('stSub').textContent = (S.meter && S.meter.model ? S.meter.model + ' · ' : '') + mode + (S.laser ? ' · laser on' : '');
@@ -873,13 +920,14 @@ function bigButton(){
   const b=$('btnMeasure'), run = SC.on || PR.on, idle = S.connected && !run && !S.busy && !S.saving;
   if (S.tab==='scan'){ b.textContent = SC.on ? 'Stop' : 'Start scan'; b.disabled = SC.on ? false : !idle; }
   else if (S.tab==='profile'){ b.textContent = PR.on ? 'Stop' : 'Start profile'; b.disabled = PR.on ? false : !idle; }
+  else if (S.tab==='defl'){ b.textContent = SC.on ? 'Stop' : 'Start'; b.disabled = SC.on ? false : !idle; }
   else { const lab = appCam() ? 'Measure<small class="bsub">opens camera app</small>' : 'Measure';
     if (b.innerHTML!==lab) b.innerHTML=lab; b.disabled = !S.connected || run || S.busy || S.saving; }
-  b.classList.toggle('stop', (S.tab==='scan' && SC.on) || (S.tab==='profile' && PR.on));
-  for (const [id,t] of [['tabSpot','spot'],['tabProfile','profile'],['tabScan','scan']]) $(id).disabled = run && t!==S.tab;   // tabs locked while a run is on
+  b.classList.toggle('stop', ((S.tab==='scan' || S.tab==='defl') && SC.on) || (S.tab==='profile' && PR.on));
+  for (const [id,t] of [['tabSpot','spot'],['tabProfile','profile'],['tabScan','scan'],['tabDefl','defl']]) $(id).disabled = run && t!==S.tab;   // tabs locked while a run is on
 }
 function scanButtons(){
-  bigButton();
+  bigButton(); dfButtons();
   const idle = S.connected && !SC.on && !PR.on && !S.busy && !S.saving;
   $('btnZero').disabled = !idle;
   $('btnProfRec').disabled = !PR.on;
@@ -1053,6 +1101,7 @@ async function measure(opts={}){
 $('btnMeasure').onclick = () => {
   if (S.tab==='scan'){ if (SC.on){ SC.stopReq=true; msg('Stopping…'); } else startScan(); return; }
   if (S.tab==='profile'){ if (PR.on){ PR.stopReq=true; msg('Stopping…'); } else startProfile(); return; }
+  if (S.tab==='defl'){ if (SC.on){ SC.stopReq=true; msg('Stopping…'); } else startDefl(); return; }
   appCam() ? startAppShot() : measure();
 };
 
@@ -1401,22 +1450,28 @@ function showScan(rawVal){
   const P=hbPeriod();
   $('rSub').textContent='Scan: '+scanLine(sc) + (P ? `, heartbeat ${(P/1000).toFixed(2)} s` : '') + (sc.method==='button' && S.meter?.btnHold!=null ? `, hold-off ${S.meter.btnHold} ms` : '');
 }
-async function startScan(){
+async function startScan(kind){
   if (!S.connected || SC.on || S.busy || S.saving) return;
+  const isD = kind==='defl';              // deflection run (v0.25.0): same reading loop, own store, viewer and CSV
   const method = S.meter?.scanMethod || (/100-25/.test(S.meter?.model||'') ? 'button' : 'direct');
   if (method==='direct' && S.laser){ msg('Laser is on: measure or wait 20 s, then scan.','warn'); return; }
   if (method==='button' && S.mode!=null && S.mode!==1){ msg('Set the meter to single distance mode.','warn'); return; }
-  const c=cfg.scan, now=new Date();
+  const c = isD ? cfg.defl : cfg.scan, now=new Date();
   const cur={ id:stamp(now).file, label:c.label||'', start:now.toISOString(), local:now.toLocaleString(),
-    speed: c.speed>0 ? c.speed : null, interval:c.interval||0, maxMin:c.maxMin||10, z:+cfg.z||0, version:VERSION, mode:S.mode, model:S.meter?.model ?? null,
-    method, avoidHb: method==='direct' && !!c.avoidHb, rows:[], frames: cfg.frames ? [] : null, stopReason:null, reconnects:0 };
+    speed: !isD && c.speed>0 ? c.speed : null, interval: isD ? 0 : c.interval||0, maxMin:c.maxMin||(isD?60:10), z: isD ? 0 : +cfg.z||0, version:VERSION, mode:S.mode, model:S.meter?.model ?? null,
+    method, avoidHb: method==='direct' && !!cfg.scan.avoidHb, rows:[], frames: cfg.frames ? [] : null, stopReason:null, reconnects:0 };
+  if (isD) Object.assign(cur, { kind:'defl', dir:c.dir, theta:Math.abs(+c.theta), slope:+c.slope||0, target:c.target, warm:Math.max(0,+c.warm||0), zw:Math.max(1,+c.zw||10),
+    store:c.store||'all', zeros:[], zAcc:{s:0,n:0}, events:[], bins: c.store && c.store!=='all' ? [] : null, openBin:null });
+  const save = () => isD ? saveDefls() : saveScans(), render = () => isD ? renderDefls() : renderScans();
+  const show = raw => isD ? dfShow() : showScan(raw), tick = () => isD ? dvTick(false) : svTick();
   camLow(true);
-  scans.push(cur); SC.cur=cur; SC.on=true; SC.stopReq=false; S.busy=true; status(); renderScans();
-  if (S.tab==='scan') openView(cur);          // live profile while scanning
-  msg(S.mode!=null && S.mode!==1 ? 'Scanning (not single distance mode: untested)' : 'Scanning…', S.mode!=null && S.mode!==1 ? 'warn' : '');
+  (isD ? defls : scans).push(cur); SC.cur=cur; SC.on=true; SC.stopReq=false; S.busy=true; status(); render();
+  if (isD) openDView(cur); else if (S.tab==='scan') openView(cur);          // live chart while running
+  if (isD) msg(`Warm-up ${cur.warm} s, then zero over ${cur.zw} s: hands off the meter.` + (S.mode!=null && S.mode!==1 ? ' Not single distance mode: untested.' : ''), S.mode!=null && S.mode!==1 ? 'warn' : '');
+  else msg(S.mode!=null && S.mode!==1 ? 'Scanning (not single distance mode: untested)' : 'Scanning…', S.mode!=null && S.mode!==1 ? 'warn' : '');
   const t0=performance.now(); SC.t0=t0; let fails=0, inv=0, i=0, lastSave=0, lastUi=0; const reps=[];
   flog('event','', 'scan start, method '+method+', heartbeat period '+(hbPeriod()??'unknown')+' ms, avoid heartbeat '+(cur.avoidHb?'on':'off'));
-  const row=(ts,tr,rv,st,wait,since)=>cur.rows.push([i++, Math.round(ts-t0), tr==null?null:Math.round(tr-t0), rv, st, wait, since, hbPeriod(), document.visibilityState==='visible'?0:1]);
+  const row=(ts,tr,rv,st,wait,since)=>{ const r=[i++, Math.round(ts-t0), tr==null?null:Math.round(tr-t0), rv, st, wait, since, hbPeriod(), document.visibilityState==='visible'?0:1]; cur.rows.push(r); if (isD) dfIngest(cur, r); };
   // Link dropped: wait for the app's auto-reconnect. Returns false if the scan should end.
   const relink = async () => {
     const tl=performance.now();
@@ -1471,7 +1526,7 @@ async function startScan(){
         else if (f.m===1){
           lasers=0; ign=0; lastRead=tr; readT=tr; ignOff=null;
           if (!(f.distance>0)){ nFail++; row(ts, tr, null, 'zero', hold, since); }
-          else { nFail=0; bReps.push(tr-ts); const raw=Math.round(f.distance/0.00005); row(ts, tr, raw, 'ok', hold, since); if (tr-bUi>200){ bUi=tr; showScan(raw); } }
+          else { nFail=0; bReps.push(tr-ts); const raw=Math.round(f.distance/0.00005); row(ts, tr, raw, 'ok', hold, since); if (tr-bUi>200){ bUi=tr; show(raw); } }
           if (S.laser) lastRead=null;                          // laser left on: next press measures, no hold-off
         }
         else if (f.m===63){ nFail++; row(ts, tr, null, 'meter error', hold, since); lastRead=tr; }
@@ -1479,8 +1534,8 @@ async function startScan(){
         else { cur.stopReason='meter not in single distance mode'; break; }
         if (S.meter) S.meter.btnHold=hold;
         if (nFail>=5){ cur.stopReason='5 failures in a row ('+cur.rows[cur.rows.length-1][4]+')'; break; }
-        svTick();
-        if (cur.rows.length-bSave>=50){ bSave=cur.rows.length; saveScans(); renderScans(); }
+        tick();
+        if (i-bSave>=50){ bSave=i; save(); render(); }
         if (cur.interval>0){ const w=ts+cur.interval-performance.now(); if (w>0) await sleep(w); }
       }
     } finally { SC.btn=false; SC.btnWait=null; cur.holdEnd=hold; if (S.meter) S.meter.btnHold=hold; }
@@ -1508,17 +1563,17 @@ async function startScan(){
       if (r.st==='invalid') flog('event','', 'meter answered without measuring (value '+r.raw.toString(16).toUpperCase()+')');
       inv = r.st==='invalid' ? inv+1 : 0;
       row(ts, (r.st==='timeout'||r.st==='send failed'||r.st==='disconnected') ? null : tr, r.raw ?? null, r.st, wait, since);
-      if (r.st==='ok'){ fails=0; reps.push(tr-ts); if (tr-lastUi>200){ lastUi=tr; showScan(r.raw); } }
+      if (r.st==='ok'){ fails=0; reps.push(tr-ts); if (tr-lastUi>200){ lastUi=tr; show(r.raw); } }
       else if (r.st!=='disconnected'){
         fails++;
         if (inv>=3 && !reps.length){                       // the meter answers without measuring: switch to button presses
-          cur.rows.length=0; i=0; cur.method='button'; cur.avoidHb=false; if (S.meter) S.meter.scanMethod='button';
+          cur.rows.length=0; i=0; lastSave=0; if (isD){ cur.zeros=[]; cur.zAcc={s:0,n:0}; cur.events=[]; if (cur.bins) cur.bins=[]; cur.openBin=null; } cur.method='button'; cur.avoidHb=false; if (S.meter) S.meter.scanMethod='button';
           flog('event','', 'direct measure not supported: switching to button presses'); break; }
         if (fails>=5){ cur.stopReason='5 failures in a row ('+r.st+')'; break; }
         await sleep(150);                      // short pause; replies arriving <280 ms after the next send are ignored as late
       }
-      svTick();
-      if (cur.rows.length-lastSave>=50){ lastSave=cur.rows.length; saveScans(); renderScans(); }
+      tick();
+      if (i-lastSave>=50){ lastSave=i; save(); render(); }
       if (cur.interval>0){ const w=ts+cur.interval-performance.now(); if (w>0) await sleep(w); }
     }
     if (cur.method==='button' && !cur.stopReason && !SC.stopReq) await runButtons();
@@ -1527,20 +1582,34 @@ async function startScan(){
     cur.end=new Date().toISOString();
     flog('event','', 'scan end: '+cur.stopReason);
     SC.on=false; SC.pending=null; S.busy=false; camLow(false);
-    saveScans(); status(); renderScans();
-    if (SV.sc===cur){ $('svSpeed').disabled=false; svDraw(); }
+    if (isD && cur.bins) dfCompact(cur, 0, true);          // last average
+    save(); status(); render();
+    if (!isD && SV.sc===cur){ $('svSpeed').disabled=false; svDraw(); }
+    if (isD){
+      if (DF.p===cur) dvDraw();
+      const pts=dfSeries(cur), nOk=pts.reduce((s,q)=>s+q.n,0);
+      const saved = (cfg.defl.autoSave && (cur.rows.length || (cur.bins && cur.bins.length))) ? exportDefls([cur], true) : null;
+      msg(`Run ended: ${nOk} readings · ${dfSummaryText(cur)}` + (cur.stopReason!=='stopped' ? ` (${cur.stopReason})` : '') + (saved ? ' · CSV saved' : ''), nOk && cur.zeros.length ? 'ok' : 'warn');
+      cue('stop'); SC.cur=null; render(); dfButtons();
+    } else {
     const s=scanStats(cur);
     const saved = (cfg.scan.autoSave && cur.rows.length) ? exportScans([cur], true) : null;
     msg(`Scan ended: ${s.ok} readings, ${s.rate.toFixed(2)} Hz, ${s.fail} failed` + (cur.stopReason!=='stopped' ? ` (${cur.stopReason})` : '') + (saved ? ' · CSV saved' : ''), s.ok && !s.fail ? 'ok' : 'warn');
     SC.cur=null; renderScans();
+    }
   }
 }
 // ---------- scan viewer: profile chart (inline SVG) ----------
-// Slider rail sag, from the flip test of 1 Oct 2026 (log §4.6): meter sits lower in the middle of the travel.
-// R(u) = a·(uc² − (u−uc)²), u = carriage travel from the start end (mm). Calibrated over u 128–863 mm (0.62 mm),
-// extrapolated beyond (≈1.1 mm at mid-travel relative to the start end). Distance correction: d + R(u) (meter down), d − R(u) (meter up).
-const RAIL = { a:4.599e-6, uc:495.5, travel:1046, cal:[128,863], date:'1 Oct 2026' };
-const railR = u => RAIL.a*(RAIL.uc*RAIL.uc - (u-RAIL.uc)*(u-RAIL.uc));
+// Slider rail sag over the full travel, from a flip test with a long straightedge on 9 Oct 2026 (log §4.20): both faces
+// scanned forward and back, aligned by markers, each pair averaged (cancels drift), the two faces averaged (cancels the
+// straightedge's own bow), 4th-order fit. Agrees with the 1 Oct flip (short straightedge) to about ±0.1 mm over u 150–840 mm
+// (sag over u 128–863 mm: 0.61 vs 0.62 mm).
+// R(u) = sag in mm (meter lower = +), zero at u 25 and 1020 mm, max 0.61 mm at u ≈ 570; u = carriage travel from the start
+// end of a forward scan (mm). Ends (u < 150, > 900) uncertain to ~±0.2 mm. Backward scans: u = travel − x, travel 1043 mm
+// (end-to-end travel found from the markers, 1041.5–1044). v0.14.0–v0.25.0 used the 1 Oct parabola, which over-corrected
+// the ends by up to 0.67 mm. Distance correction: d + R(u) (meter down), d − R(u) (meter up).
+const RAIL = { p:[2.077835e-11, -4.630611e-08, 3.100845e-05, -5.621373e-03, 1.218695e-01], travel:1043, cal:[25,1020], max:0.61, date:'9 Oct 2026' };
+const railR = u => RAIL.p.reduce((s,c)=>s*u+c, 0);
 const SV = { sc:null, range:[0,1], lastDraw:0 };
 function svSeries(sc){
   const z=sc.z||0, speed=sc.speed||null, pts=[];
@@ -1560,7 +1629,7 @@ function svCompute(){
     for (const p of pts){ const u = rail==='fwd' ? p.x-x0 : RAIL.travel-(p.x-x0);
       if (u<RAIL.cal[0] || u>RAIL.cal[1]) outside++;
       p.d += (sc.flip?-1:1)*railR(u); }
-    railNote = ` Rail sag removed (flip test ${RAIL.date}, ${rail==='fwd'?'forward':'backward'} scan from the travel end; up to ${railR(RAIL.uc).toFixed(2)} mm)`
+    railNote = ` Rail sag removed (flip test ${RAIL.date}, full travel; ${rail==='fwd'?'forward':'backward'} scan from the travel end; up to ${RAIL.max.toFixed(2)} mm; ends ±0.2 mm)`
       + (outside ? `; ${Math.round(100*outside/pts.length)}% of points outside the calibrated ${RAIL.cal[0]}–${RAIL.cal[1]} mm, extrapolated.` : '.');
   }
   const ds=pts.map(p=>p.d), p97=pct(ds,0.97), flip=!!sc.flip;
@@ -1699,7 +1768,8 @@ function exportScans(list, quiet){
 }
 $('btnScanCsv').onclick = ()=>exportScans(scans.filter(s=>s!==SC.cur));
 $('btnScanClear').onclick = ()=>{ if (SC.on) return; if (scans.length && confirm(`Delete all ${scans.length} saved scans from this phone?`)){ scans=[]; closeView(); saveScans(); renderScans(); msg('Scans deleted.'); } };
-document.addEventListener('visibilitychange', ()=>{ if (SC.on && SC.cur){ flog('event','', 'page '+document.visibilityState); if (document.visibilityState!=='visible') SC.cur.hidden=true; } });
+document.addEventListener('visibilitychange', ()=>{ if (SC.on && SC.cur){ flog('event','', 'page '+document.visibilityState); if (document.visibilityState!=='visible') SC.cur.hidden=true;
+  else if (SC.cur.kind==='defl') msg('Keep Planum in front: readings slow down in the background.','warn'); } });
 $('scLabel').value=cfg.scan.label; $('scSpeed').value=cfg.scan.speed??''; $('scInt').value=cfg.scan.interval; $('scMax').value=cfg.scan.maxMin; $('scAuto').checked=cfg.scan.autoSave;
 $('scLabel').addEventListener('change', e=>{ cfg.scan.label=e.target.value.trim().slice(0,40); e.target.value=cfg.scan.label; saveCfg(); });
 $('scSpeed').addEventListener('change', e=>{ const v=parseFloat(e.target.value); cfg.scan.speed = v>0 ? v : null; e.target.value=cfg.scan.speed??''; saveCfg(); });
@@ -2249,7 +2319,7 @@ function toggleCompare(p){
   renderProfiles();
 }
 $('pvClose').onclick=closePView;
-window.__planum = { get profiles(){ return profiles; }, get zeroCal(){ return zeroCal; }, pairData, cmpData, PV, openPView, zeroStats, profSeries, setZeroMode, msg, describe, XMP_FIELDS, get PR(){ return PR; } };   // read-only hook for workspace tests
+window.__planum = { svCompute:()=>svCompute(), railR:u=>railR(u), RAIL, openView:sc=>openView(sc), get scans(){ return scans; }, get profiles(){ return profiles; }, get zeroCal(){ return zeroCal; }, pairData, cmpData, PV, openPView, zeroStats, profSeries, setZeroMode, msg, describe, XMP_FIELDS, get PR(){ return PR; }, get defls(){ return defls; }, dfK:(...a)=>dfK(...a), dfSeries:(...a)=>dfSeries(...a), dfSummary:(...a)=>dfSummary(...a), dfDrift:(...a)=>dfDrift(...a), dfCsv:(...a)=>dfCsv(...a), dfIngest:(...a)=>dfIngest(...a), dfCompact:(...a)=>dfCompact(...a), SC };   // read-only hook for workspace tests
 $('pvDiff').onchange=e=>{ PV.diffOnly=e.target.checked; pvDraw(); };
 $('pvAvg').onchange=e=>{ PV.useAvg=e.target.checked; pvDraw(); };
 $('pvExp').onclick=()=>{ if (PV.mode==='cmp') exportCompare(); else { const pd=pairData(PV.p); if (pd && pd.complete) exportPair(pd); } };
@@ -2362,6 +2432,358 @@ document.addEventListener('visibilitychange', ()=>{ if (PR.on && PR.cur){ profEv
 })();
 renderProfiles(); zeroStatus();
 
+// ---------- deflection (v0.25.0): distance to one spot over time, turned into deflection ----------
+// Meter fixed off the structure, laser on one spot, single distance mode; the Scan engine takes the readings (direct
+// measure on the 50-27 CG, button presses on the 100-25 C). Deflection δ (positive = down) = k × (distance − zero):
+//   laser down onto a top surface:  k = +(sin θ + a·cos θ)      laser up at a soffit:  k = −(sin θ − a·cos θ)
+//   plate square to the beam:       k = ±1/sin θ                 a = surface slope along the laser, rising away from the meter
+// On a flat face the spot slides 10/(tan θ ± a) mm per 10 mm of deflection and the formula stays exact (bench test
+// 7 Oct 2026, log §4.16: within 0.5 % with the meter's own angle; slope term needed, about 1 %). Zero = median distance
+// over [warm-up, warm-up + zero window]; Zero now re-zeros from the last zero window of readings (piecewise from then on).
+// The thick line, peak, zero and stored averages are medians, so a short blockage of the beam doesn't count.
+cfg.defl = Object.assign({label:'', dir:'down', theta:null, slope:0, target:'surface', warm:60, zw:10, maxMin:60, store:'all', autoSave:true}, cfg.defl||{});
+let defls = store.get('defls', []);
+defls.forEach(d=>{ if (!d.stopReason) d.stopReason='interrupted (page closed)'; });
+const DF = { p:null, lastDraw:0, storeWarned:false, drift:false, raw:true, tick:0 };
+const DF_MAX_COUNT=20, DF_MAX_ROWS=60000;
+// median: ignores short blockages (a hand, person or vehicle in the beam), which a mean would not (7 Oct shim test: hands in the beam pulled a 5 s mean to −280 mm)
+function dfMed(a){ if (!a.length) return null; const b=a.slice().sort((x,y)=>x-y), h=b.length>>1; return b.length%2 ? b[h] : (b[h-1]+b[h])/2; }
+function dfSize(x){ return x.rows.length + (x.bins ? x.bins.length : 0); }
+function saveDefls(){
+  let total=defls.reduce((s,x)=>s+dfSize(x),0);
+  while (defls.length>1 && defls[0]!==SC.cur && (defls.length>DF_MAX_COUNT || total>DF_MAX_ROWS)){ total-=dfSize(defls[0]); defls.shift(); }
+  defls.slice(0,-3).forEach(x=>{ if (x.frames){ delete x.frames; x.framesDropped=true; } });   // frame logs: last 3 runs
+  try{ localStorage.setItem('glm.defls', JSON.stringify(defls)); return true; }
+  catch(e){ if (!DF.storeWarned){ DF.storeWarned=true; msg('Storage full: run kept in memory, CSV saved at the end. Use a 5 s or 30 s average for long runs.','warn'); } return false; }
+}
+// factor: k = mm of deflection (down +) per mm of distance change; per = mm of distance per mm of deflection; slide = mm per 10 mm
+function dfK(p){
+  const th=Math.abs(parseFloat(p.theta)), a=(parseFloat(p.slope)||0)/100, down=p.dir!=='up';
+  if (!(th>0 && th<=90)) return {err:'Enter the laser angle in Deflection settings.'};
+  const r=th*Math.PI/180, sg=down?1:-1;
+  if (p.target==='plate') return {k:sg/Math.sin(r), per:Math.sin(r), slide:null};
+  const inc=Math.sin(r)+sg*a*Math.cos(r);
+  if (inc<0.05) return {err:'Beam almost along the surface: check the angle and slope.'};
+  return {k:sg*inc, per:1/inc, slide:10/(Math.tan(r)+sg*a)};
+}
+function dfFactorText(p){
+  const K=dfK(p); if (K.err) return K.err;
+  return `1 mm of deflection = ${K.per.toFixed(2)} mm of distance · ` + (K.slide==null ? 'spot stays on the plate' : `spot slides ${Math.abs(K.slide)<0.5 ? '0' : Math.abs(K.slide).toFixed(0)} mm per 10 mm`)
+    + ` · laser ${p.dir==='up'?'up':'down'} ${Math.abs(+p.theta).toFixed(2)}°` + (p.target==='plate' ? ', plate' : `, slope ${(+p.slope||0).toFixed(1)}%`) + '.';
+}
+function dfShowFactor(){ $('dfFactor').textContent = dfFactorText(cfg.defl); }
+// called by the scan engine for every row of a deflection run
+function dfIngest(cur, r){
+  if (!r || r[4]!=='ok' || !r[3] || r[2]==null) return;
+  const t=(r[1]+r[2])/2, d=r[3]*0.05, z0=cur.warm*1000, z1=(cur.warm+cur.zw)*1000;   // ms since start, mm
+  if (!cur.zeros.length){
+    if (!cur.zAcc.v) cur.zAcc.v=[];
+    if (t>=z0 && t<=z1) cur.zAcc.v.push(d);
+    else if (t>z1){
+      if (!cur.zAcc.v.length) cur.zAcc.v.push(d);
+      cur.zeros.push({t:Math.round(z1), d:+dfMed(cur.zAcc.v).toFixed(4), n:cur.zAcc.v.length, how:'auto'});
+      if (cur===SC.cur){ dfEvent('zero', Math.round(z1), true); cue('rec'); msg('Zeroed: deflection from now (positive = down).','ok'); }
+      else cur.events.push({t:Math.round(z1), type:'zero', n:1});
+    }
+  }
+  if (cur.bins) dfCompact(cur, t, false);
+}
+// averaged storage: readings of a finished bin are replaced by one row [t_ms, d_mm, n, sd_mm]
+function dfCompact(cur, t, all){
+  const W=(+cur.store)*1000, b=Math.floor(t/W);
+  if (cur.openBin==null) cur.openBin=b;
+  if (!all && b<=cur.openBin) return;
+  const inBin=r=>r[4]==='ok' && r[3] && r[2]!=null && (all || Math.floor(((r[1]+r[2])/2)/W)===cur.openBin);
+  const ok=cur.rows.filter(inBin);
+  if (ok.length){
+    const ds=ok.map(r=>r[3]*0.05), ts=ok.map(r=>(r[1]+r[2])/2), m=avg(ds);
+    const sd = ds.length>1 ? Math.sqrt(ds.reduce((s,x)=>s+(x-m)**2,0)/(ds.length-1)) : 0;
+    cur.bins.push([Math.round(avg(ts)), +dfMed(ds).toFixed(4), ds.length, +sd.toFixed(3)]);   // median of the bin; sd shows the scatter
+    cur.rows=cur.rows.filter(r=>!inBin(r));
+  }
+  cur.openBin=b;
+}
+function dfEvent(type, tMs, auto){
+  const p=SC.cur; if (!p || p.kind!=='defl') return;
+  const t = tMs!=null ? tMs : Math.round(performance.now()-SC.t0);
+  const n = p.events.filter(e=>e.type===type).length+1;
+  p.events.push({t, type, n});
+  flog('event','', 'deflection: '+type+' '+n);
+  if (auto) return;
+  const name={on:'Load on', off:'Load off', mark:'Mark', zero:'Zero'}[type];
+  cue('rec'); msg(`${name} ${n} at ${dfClock(t/1000)}.`,'ok');
+  dfShow(); dvTick(true); scanButtons();
+}
+const dfClock = s => { s=Math.max(0,Math.round(s)); const h=Math.floor(s/3600), m=Math.floor(s%3600/60), x=s%60;
+  return (h ? h+':'+String(m).padStart(2,'0') : m) + ':' + String(x).padStart(2,'0'); };
+// load periods [tOn, tOff] in s (tOff = end when still loaded)
+function dfPeriods(p, tEnd){
+  const P=[]; let on=null;
+  for (const e of p.events.slice().sort((a,b)=>a.t-b.t)){
+    if (e.type==='on' && on==null) on=e.t/1000;
+    else if (e.type==='off' && on!=null){ P.push([on, e.t/1000, P.length+1]); on=null; }
+  }
+  if (on!=null) P.push([on, tEnd, P.length+1, true]);
+  return P;
+}
+function dfLoaded(p){ const P=dfPeriods(p, Infinity); return P.length && P[P.length-1][3] ? P[P.length-1] : null; }
+// series: one point per stored reading (or median); y = deflection (mm, down +), ym = 5 s median centred on the point
+// (no lag on the chart; the live readout uses the latest 5 s instead)
+function dfSeries(p){
+  const pts=[];
+  for (const b of p.bins||[]) pts.push({t:b[0]/1000, d:b[1], n:b[2], sd:b[3]});
+  for (const r of p.rows){ if (r[4]!=='ok' || !r[3] || r[2]==null) continue; pts.push({t:(r[1]+r[2])/2000, d:r[3]*0.05, n:1, i:r[0], rep:r[2]-r[1]}); }
+  pts.sort((a,b)=>a.t-b.t);
+  const K=dfK(p), k=K.k||0, Z=p.zeros||[];
+  let zi=0;
+  for (const q of pts){
+    while (zi+1<Z.length && Z[zi+1].t<=q.t*1000) zi++;
+    q.dd = Z.length ? q.d-Z[zi].d : q.d-pts[0].d; q.y=k*q.dd;
+    q.ph = q.t<p.warm ? 'warm-up' : q.t<=p.warm+p.zw ? 'zero' : 'run';
+  }
+  let j=0, k2=0;
+  for (let m=0; m<pts.length; m++){ const q=pts[m];
+    while (j<m && pts[j].t<q.t-2.5-1e-9) j++;
+    if (k2<m) k2=m; while (k2+1<pts.length && pts[k2+1].t<=q.t+2.5+1e-9) k2++;
+    q.ym=dfMed(pts.slice(j,k2+1).map(x=>x.y)); }
+  return pts;
+}
+function dfEndT(p, pts){ return p.end ? Math.max((new Date(p.end)-new Date(p.start))/1000, pts.length?pts[pts.length-1].t:0) : (SC.cur===p ? (performance.now()-SC.t0)/1000 : (pts.length?pts[pts.length-1].t:0)); }
+// drift: straight line through the unloaded readings after zero (viewer only; the CSV keeps both)
+function dfDrift(p, pts){
+  const z1=p.warm+p.zw, P=dfPeriods(p, Infinity);
+  const u=pts.filter(q=>q.t>z1 && !P.some(r=>q.t>=r[0] && q.t<=r[1]));
+  if (u.length<10) return null;
+  const span=u[u.length-1].t-u[0].t; if (span<20) return null;
+  let sw=0, st=0, sy=0; for (const q of u){ sw+=q.n; st+=q.t*q.n; sy+=q.ym*q.n; }          // fitted to the 5 s median: blockages don't tilt it
+  const mt=st/sw, my=sy/sw; let sxx=0, sxy=0; for (const q of u){ sxx+=q.n*(q.t-mt)**2; sxy+=q.n*(q.t-mt)*(q.ym-my); }
+  const m = sxx>0 ? sxy/sxx : 0;
+  return { m, c:my-m*mt, n:u.length, span, at:t=>my+m*(t-mt) };
+}
+// summary: per load cycle the peak (5 s median, largest size) and what is left at the end of the unloaded period after it
+function dfSummary(p){
+  const pts=dfSeries(p), z1=p.warm+p.zw, tEnd=dfEndT(p, pts), after=pts.filter(q=>q.t>z1);
+  if (!p.zeros || !p.zeros.length || !after.length) return {pts, none:true};
+  const big=a=>a.reduce((b,q)=>!b || Math.abs(q.ym)>Math.abs(b.ym) ? q : b, null);
+  const meanEnd=(t0,t1)=>{ const w=after.filter(q=>q.t>t1-p.zw && q.t<=t1 && q.t>=t0); return w.length ? dfMed(w.map(q=>q.y)) : null; };   // median over the last zero window
+  const P=dfPeriods(p, tEnd), cyc=[];
+  P.forEach((r,ix)=>{ const pk=big(after.filter(q=>q.t>=r[0] && q.t<=r[1]));
+    const nextOn = ix+1<P.length ? P[ix+1][0] : tEnd;
+    cyc.push({n:r[2], on:r[0], off:r[3]?null:r[1], peak:pk?pk.ym:null, tPeak:pk?pk.t:null, resid: r[3] ? null : meanEnd(r[1], nextOn), residLen: r[3]?0:nextOn-r[1]}); });
+  const pk=big(after), endV=meanEnd(z1, tEnd), dr=dfDrift(p, pts);
+  return {pts, cyc, peak:pk?pk.ym:null, tPeak:pk?pk.t:null, end:endV, drift:dr, tEnd};
+}
+function dfSummaryText(p, S0){
+  const s=S0||dfSummary(p);
+  if (s.none) return 'Stopped before the zero was set: no deflection.';
+  const b=[];
+  if (s.cyc.length) for (const c of s.cyc) b.push(`load ${c.n}: peak ${c.peak!=null?sgn2(c.peak):'–'} mm` + (c.off==null ? ' (still on)' : c.resid!=null ? `, left after unloading ${sgn2(c.resid)} mm` + (c.peak ? ` (${Math.round(100*c.resid/c.peak)}%)` : '') : ''));
+  else b.push(`peak ${sgn2(s.peak)} mm at ${dfClock(s.tPeak)}`);
+  b.push(`end ${s.end!=null?sgn2(s.end):'–'} mm`);
+  if (s.drift) b.push(`drift ${sgn2(s.drift.m*60)} mm/min (unloaded readings)`);
+  return b.join(' · ');
+}
+// live readout during a run
+function dfShow(){
+  const p=SC.cur; if (!p || p.kind!=='defl') return;
+  const pts=dfSeries(p), last=pts[pts.length-1], tNow=(performance.now()-SC.t0)/1000, z1=p.warm+p.zw, chip=$('dfChip');
+  $('dfState').hidden=false;
+  const after=pts.filter(q=>q.t>z1), pk=after.reduce((b,q)=>!b || Math.abs(q.ym)>Math.abs(b.ym) ? q : b, null);
+  const live = last ? dfMed(pts.filter(q=>q.t>=last.t-5).map(q=>q.y)) : null;      // latest 5 s
+  if (!p.zeros.length){
+    chip.textContent = tNow<p.warm ? `Warm-up ${Math.ceil(p.warm-tNow)} s` : `Zeroing ${Math.max(0,Math.ceil(z1-tNow))} s`; chip.className='pchip go';
+    $('rDist').innerHTML='–<small>mm</small>';
+  } else {
+    const L=dfLoaded(p); chip.textContent = L ? `Load ${L[2]} on` : 'Measuring'; chip.className = L ? 'pchip hold' : 'pchip ok';
+    $('rDist').innerHTML=(live!=null ? sgn2(live) : '–')+'<small>mm</small>';
+  }
+  $('rAng').textContent = pk ? sgn2(pk.ym) : '–'; $('rAngL').textContent='peak, mm';
+  const since = p.zeros.length ? dfClock(tNow - p.zeros[p.zeros.length-1].t/1000) : '–';
+  const n=pts.reduce((s,q)=>s+q.n,0), rate = tNow>2 ? n/tNow : 0;
+  $('rSub').textContent = `Deflection: ${since} since zero, ${n} readings, ${rate.toFixed(2)}/s` + (last ? `, distance ${(last.d/1000).toFixed(4)} m` : '');
+  $('dfLine').textContent = `${dfClock(tNow)} · ${n} readings` + (p.zeros.length && live!=null ? ` · now ${sgn2(live)} mm` : '') + (pk ? ` · peak ${sgn2(pk.ym)} mm` : '');
+}
+setInterval(()=>{ if (SC.on && SC.cur && SC.cur.kind==='defl'){ dfShow(); dvTick(false); if (++DF.tick%5===0) renderDefls(); } }, 1000);   // countdown runs between readings too; list line every 5 s
+function dfButtons(){
+  const run = SC.on && SC.cur && SC.cur.kind==='defl', L = run ? dfLoaded(SC.cur) : null;
+  $('dfBtns').hidden=!run; $('dfState').hidden=!run;
+  $('dfOn').disabled = !run || !!L; $('dfOff').disabled = !run || !L; $('dfMark').disabled=!run;
+  $('dfZero').disabled = !run || !SC.cur.zeros.length;
+}
+function dfZeroNow(){
+  const p=SC.cur; if (!SC.on || !p || p.kind!=='defl' || !p.zeros.length) return;
+  const tNow=(performance.now()-SC.t0)/1000, w=dfSeries(p).filter(q=>q.t>=tNow-p.zw);
+  if (!w.length){ msg('No readings in the last '+p.zw+' s: try again shortly.','warn'); return; }
+  p.zeros.push({t:Math.round(tNow*1000), d:+dfMed(w.map(q=>q.d)).toFixed(4), n:w.length, how:'manual'});
+  dfEvent('zero');
+}
+function dfRunLine(p){
+  const s=dfSummary(p), n=s.pts.reduce((a,q)=>a+q.n,0), dur=dfEndT(p, s.pts);
+  return `${p.label?p.label+'  ':''}${dfClock(dur)}, ${n} readings` + (s.none ? ', no zero' : s.cyc.length ? `, ${s.cyc.length} load${s.cyc.length>1?'s':''}, peak ${sgn2(s.cyc.reduce((b,c)=>c.peak!=null && (b==null || Math.abs(c.peak)>Math.abs(b)) ? c.peak : b, null) ?? 0)} mm` : `, peak ${sgn2(s.peak)} mm`) + (s.end!=null ? `, end ${sgn2(s.end)} mm` : '');
+}
+function renderDefls(){
+  const ul=$('dfList'); ul.innerHTML='';
+  setCount('cntDefl', defls.length);
+  if (!defls.length){ const li=document.createElement('li'); li.textContent='Deflection runs appear here.'; ul.appendChild(li); }
+  for (const p of defls.slice().reverse()){
+    const li=document.createElement('li'); li.className='scanitem';
+    const a=document.createElement('div'); a.textContent=dfRunLine(p);
+    const t=document.createElement('div'); t.className='t';
+    const ex=[`laser ${p.dir} ${p.theta.toFixed(2)}°`, p.target==='plate' ? 'plate' : `slope ${(+p.slope).toFixed(1)}%`, `factor ${dfK(p).k!=null?dfK(p).k.toFixed(4):'?'}`];
+    if (p.store!=='all') ex.push(`${p.store} s medians`);
+    if (p.zeros && p.zeros.length>1) ex.push(`${p.zeros.length-1} re-zero${p.zeros.length>2?'s':''}`);
+    if (p.reconnects) ex.push(`${p.reconnects} reconnects`); if (p.meter_errors) ex.push(`${p.meter_errors} meter errors`); if (p.hidden) ex.push('page left during the run');
+    t.textContent=`${p.local}, ${p.stopReason||'running'}, ${ex.join(', ')}`;
+    li.append(a,t);
+    const acts=document.createElement('div'); acts.className='acts';
+    const mk=(txt,fn)=>{ const b=document.createElement('button'); b.className='btn sm'; b.textContent=txt; b.onclick=fn; acts.appendChild(b); };
+    mk('View', ()=>openDView(p));
+    if (p!==SC.cur){
+      mk('Export', ()=>exportDefls([p]));
+      mk('Delete', ()=>{ if (confirm('Delete this deflection run from the phone?')){ defls=defls.filter(x=>x!==p); if (DF.p===p) closeDView(); saveDefls(); renderDefls(); } });
+    }
+    li.appendChild(acts); ul.appendChild(li);
+  }
+}
+// ---------- deflection viewer: deflection against time (inline SVG) ----------
+function openDView(p){ DF.p=p; $('dv').hidden=false; $('dvTitle').textContent=`${p.label?p.label+' · ':''}${p.local}`; dvDraw(); if (S.tab==='defl') $('dv').scrollIntoView({block:'nearest'}); }
+function closeDView(){ DF.p=null; $('dv').hidden=true; }
+function dvTick(force){ if (DF.p && DF.p===SC.cur && !$('dv').hidden && (force || performance.now()-DF.lastDraw>1000)) dvDraw(); }
+function dvDraw(){
+  const p=DF.p; if (!p) return;
+  const svg=$('dvSvg'), W=Math.max(200, $('dvChart').clientWidth);
+  const s=dfSummary(p), pts=s.pts, z1=p.warm+p.zw, dr=s.drift, useDr=DF.drift && !!dr;
+  $('dvDrift').disabled=!dr; if (!dr) $('dvDrift').checked=false;
+  $('dvTip').textContent='Touch the chart to read values.';
+  const K=dfK(p);
+  $('dvNote').textContent = (s.none ? 'Warm-up and zero: deflection starts once the zero is set. ' : dfSummaryText(p, s)+'. ')
+    + `Deflection = distance change × ${K.k!=null?K.k.toFixed(4):'?'} (positive = down; ${dfFactorText(p)}). Thin line: ${p.store==='all'?'each reading':p.store+' s medians'}; thick line: 5 s median, centred (ignores short blockages of the beam). Shaded: warm-up and zero (grey), load on (orange).`
+    + (useDr ? ` Drift removed: straight line through the unloaded readings, ${sgn2(dr.m*60)} mm/min (viewer only; the CSV keeps both).` : dr ? ' Remove drift fits a straight line through the unloaded readings.' : '');
+  if (pts.length<2){ svg.setAttribute('viewBox',`0 0 ${W} 60`); svg.setAttribute('height',60); svg.innerHTML=''; DF.lastDraw=performance.now(); return; }
+  const tEnd=Math.max(s.tEnd||0, pts[pts.length-1].t), useMin = tEnd>300, tu = useMin ? 60 : 1;
+  const Yv=q=>useDr && q.t>z1 ? q.y-dr.at(q.t) : q.y, Ym=q=>useDr && q.t>z1 ? q.ym-dr.at(q.t) : q.ym;
+  const vis = pts.filter(q=>q.t>=(p.zeros.length ? Math.max(0,z1-p.zw) : 0));       // warm-up drift stays off the y scale once zeroed
+  const ys=(vis.length>1?vis:pts).flatMap(q=>DF.raw ? [Yv(q), Ym(q)] : [Ym(q)]);
+  let y0=Math.min(0,...ys), y1=Math.max(0,...ys); if (y1-y0<1){ const c=(y0+y1)/2; y0=c-0.5; y1=c+0.5; } const pad=(y1-y0)*0.08; y0-=pad; y1+=pad;
+  const m={l:44,r:10,t:14,b:30}, pw=W-m.l-m.r, ph=Math.min(300, Math.max(180, W*0.45)), H=ph+m.t+m.b;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.setAttribute('height',H);
+  const x0=0, x1=tEnd||1, X=t=>m.l+(t-x0)/(x1-x0)*pw, Y=y=>m.t+(y1-Math.max(y0,Math.min(y1,y)))/(y1-y0)*ph;
+  const grid=cssv('--grid'), axis=cssv('--line'), ser=cssv('--series-1'), ink=cssv('--ink'), bg=cssv('--bg'), load=cssv('--series-2'), mut=cssv('--muted');
+  let o='';
+  o+=`<rect x="${X(0).toFixed(1)}" y="${m.t}" width="${(X(Math.min(z1,x1))-X(0)).toFixed(1)}" height="${ph}" fill="${grid}" opacity=".7"/>`;
+  for (const r of dfPeriods(p, x1)) o+=`<rect x="${X(r[0]).toFixed(1)}" y="${m.t}" width="${Math.max(1,X(Math.min(r[1],x1))-X(r[0])).toFixed(1)}" height="${ph}" fill="${load}" opacity=".13"/>`;
+  const yst=niceStep(y1-y0,5);
+  for (let v=Math.ceil(y0/yst)*yst; v<=y1+1e-9; v+=yst){ const yy=Y(v).toFixed(1);
+    o+=`<line x1="${m.l}" x2="${W-m.r}" y1="${yy}" y2="${yy}" stroke="${Math.abs(v)<1e-9?axis:grid}" stroke-width="1"/><text class="tick" x="${m.l-5}" y="${+yy+4}" text-anchor="end">${+v.toFixed(2)}</text>`; }
+  const xst=niceStep((x1-x0)/tu, W<420?5:8);
+  for (let v=0; v<=x1/tu+1e-9; v+=xst){ const xx=X(v*tu).toFixed(1);
+    o+=`<line x1="${xx}" x2="${xx}" y1="${m.t+ph}" y2="${m.t+ph+4}" stroke="${axis}"/><text class="tick" x="${xx}" y="${m.t+ph+15}" text-anchor="middle">${+v.toFixed(1)}</text>`; }
+  o+=`<text class="alab" x="${m.l+pw/2}" y="${H-2}" text-anchor="middle">time (${useMin?'min':'s'})</text>`;
+  o+=`<text class="alab" transform="translate(10,${m.t+ph/2}) rotate(-90)" text-anchor="middle">deflection, mm (down +)</text>`;
+  const lastX=[-1e9,-1e9];                                   // two label rows, so close events don't overprint
+  for (const e of p.events.slice().sort((a,b)=>a.t-b.t)){ if (e.type==='zero' && e.t<=z1*1000+1) continue; const xv=X(e.t/1000), xx=xv.toFixed(1), lab={on:'on',off:'off',mark:'M',zero:'Z'}[e.type]+e.n;
+    const row = xv-lastX[0] >= 26 ? 0 : xv-lastX[1] >= 26 ? 1 : 0; lastX[row]=xv;
+    o+=`<line x1="${xx}" x2="${xx}" y1="${m.t}" y2="${m.t+ph}" stroke="${mut}" stroke-width="1" stroke-dasharray="3 3"/><text class="tick" x="${xx}" y="${row ? m.t+11 : m.t-3}" text-anchor="${row ? 'start' : 'middle'}" dx="${row ? 3 : 0}">${lab}</text>`; }
+  // thin line: every stored point (bucketed min/max per pixel when dense); thick line: 5 s mean
+  const path=(f)=>{ let d='', bx=null, lo=null, hi=null, first=true;
+    const flush=()=>{ if (bx==null) return; d+=(first?'M':'L')+bx+','+Y(lo).toFixed(1); if (hi!==lo) d+='L'+bx+','+Y(hi).toFixed(1); first=false; };
+    for (const q of pts){ const xx=X(q.t).toFixed(1), v=f(q); if (xx!==bx){ flush(); bx=xx; lo=hi=v; } else { lo=Math.min(lo,v); hi=Math.max(hi,v); } }
+    flush(); return d; };
+  o+=`<clipPath id="dvcp"><rect x="${m.l}" y="${m.t-2}" width="${pw}" height="${ph+4}"/></clipPath>`;
+  if (DF.raw) o+=`<path d="${path(Yv)}" fill="none" stroke="${ser}" stroke-width="1" opacity=".55" stroke-linejoin="round" clip-path="url(#dvcp)"/>`;
+  o+=`<path d="${path(Ym)}" fill="none" stroke="${ink}" stroke-width="2" stroke-linejoin="round" clip-path="url(#dvcp)"/>`;
+  o+=`<line id="dvHair" y1="${m.t}" y2="${m.t+ph}" stroke="${axis}" stroke-width="1" visibility="hidden"/>`;
+  o+=`<circle id="dvDot" r="4.5" fill="${ink}" stroke="${bg}" stroke-width="2" visibility="hidden"/>`;
+  o+=`<rect id="dvHit" x="${m.l}" y="0" width="${pw}" height="${H}" fill="transparent"/>`;
+  svg.innerHTML=o;
+  const leg=$('dvLeg'); leg.innerHTML='';
+  for (const it of (DF.raw ? [[ser,1,p.store==='all'?'each reading':p.store+' s medians'],[ink,3,'5 s median']] : [[ink,3,'5 s median']])){ const sp=document.createElement('span'), k=document.createElement('i'); k.style.background=it[0]; if (it[1]>2) k.style.height='4px'; sp.append(k, document.createTextNode(it[2])); leg.appendChild(sp); }
+  const move=e=>{ const r=svg.getBoundingClientRect(), px=(e.clientX-r.left)*(W/r.width), tv=x0+(px-m.l)/pw*(x1-x0);
+    let lo=0, hi=pts.length-1; while (hi-lo>1){ const mid=(lo+hi)>>1; if (pts[mid].t<tv) lo=mid; else hi=mid; }
+    const q = Math.abs(pts[lo].t-tv)<=Math.abs(pts[hi].t-tv) ? pts[lo] : pts[hi], hx=X(q.t);
+    $('dvHair').setAttribute('x1',hx); $('dvHair').setAttribute('x2',hx); $('dvHair').setAttribute('visibility','visible');
+    $('dvDot').setAttribute('cx',hx); $('dvDot').setAttribute('cy',Y(Ym(q))); $('dvDot').setAttribute('visibility','visible');
+    const tip=$('dvTip'); tip.textContent='';
+    const b=document.createElement('b'); b.textContent=`${sgn2(Ym(q))} mm`; tip.append(b, document.createTextNode(` 5 s median at ${dfClock(q.t)}`));
+    const d=document.createElement('div');
+    d.textContent=`${q.n>1?q.n+'-reading median':'reading'} ${sgn2(Yv(q))} mm · distance ${(q.d/1000).toFixed(5)} m · change ${sgn2(q.dd)} mm · ${q.ph}` + (q.i!=null?` · #${q.i}`:'');
+    tip.appendChild(d); };
+  const hit=$('dvHit'); hit.addEventListener('pointermove',move); hit.addEventListener('pointerdown',move);
+  hit.addEventListener('pointerleave',()=>{ $('dvHair').setAttribute('visibility','hidden'); $('dvDot').setAttribute('visibility','hidden'); });
+  DF.lastDraw=performance.now();
+}
+$('dvClose').onclick=closeDView;
+$('dvDrift').onchange=e=>{ DF.drift=e.target.checked; dvDraw(); };
+$('dvRaw').onchange=e=>{ DF.raw=e.target.checked; dvDraw(); };
+window.addEventListener('resize', ()=>{ if (DF.p && !$('dv').hidden) dvDraw(); });
+// ---------- deflection CSV: one row per reading (or average), failures and events in time order ----------
+const DF_COLS=['run_id','label','i','t_s','status','distance_m','n','sd_mm','reply_ms','distance_change_mm','deflection_mm','deflection_median_5s_mm','deflection_detrended_mm',
+  'zero_distance_m','phase','loaded','event','laser','angle_deg','slope_pct','target','factor','warm_s','zero_s','store','meter_model','scan_method','reconnects','meter_errors','page_left',
+  'start_local','start_utc','end_utc','stop_reason','app_version'];
+function dfCsv(list){
+  const out=[DF_COLS.join(',')];
+  for (const p of list){
+    const pts=dfSeries(p), dr=dfDrift(p, pts), K=dfK(p), Z=p.zeros||[], P=dfPeriods(p, Infinity), z1=p.warm+p.zw;
+    const base={ run_id:p.id, label:p.label, laser:p.dir, angle_deg:p.theta, slope_pct:p.slope, target:p.target, factor:K.k!=null?+K.k.toFixed(6):null, warm_s:p.warm, zero_s:p.zw, store:p.store,
+      meter_model:p.model, scan_method:p.method||'direct', reconnects:p.reconnects||0, meter_errors:p.meter_errors||0, page_left:p.hidden?1:0,
+      start_local:p.local, start_utc:p.start, end_utc:p.end||null, stop_reason:p.stopReason||null, app_version:p.version };
+    const zAt=t=>{ let z=null; for (const x of Z) if (x.t<=t*1000) z=x; return z || Z[0] || null; };
+    const rows=[];
+    for (const q of pts){ const z=zAt(q.t);
+      rows.push({t:q.t, o:0, r:{ i:q.i??null, t_s:+q.t.toFixed(3), status:'ok', distance_m:+(q.d/1000).toFixed(6), n:q.n, sd_mm:q.sd??null, reply_ms:q.rep??null,
+        distance_change_mm: z ? +q.dd.toFixed(4) : null, deflection_mm: z ? +q.y.toFixed(4) : null, deflection_median_5s_mm: z ? +q.ym.toFixed(4) : null,
+        deflection_detrended_mm: z && dr && q.t>z1 ? +(q.y-dr.at(q.t)).toFixed(4) : null, zero_distance_m: z ? +(z.d/1000).toFixed(6) : null,
+        phase:q.ph, loaded: P.some(r=>q.t>=r[0] && q.t<=r[1]) ? 1 : 0 }}); }
+    for (const r of p.rows) if (r[4]!=='ok' || !r[3]) rows.push({t:r[1]/1000, o:1, r:{ i:r[0], t_s:+(r[1]/1000).toFixed(3), status:(r[4]==='ok'?'zero':r[4]) }});
+    for (const e of p.events) rows.push({t:e.t/1000, o:2, r:{ t_s:+(e.t/1000).toFixed(3), status:'event', event:({on:'load on',off:'load off',mark:'mark',zero:'zero'}[e.type])+' '+e.n,
+      zero_distance_m: e.type==='zero' && zAt(e.t/1000+1e-6) ? +(zAt(e.t/1000+1e-6).d/1000).toFixed(6) : null }});
+    rows.sort((a,b)=>a.t-b.t || a.o-b.o);
+    for (const x of rows){ const row=Object.assign({}, base, x.r); out.push(DF_COLS.map(k=>csvEsc(row[k])).join(',')); }
+  }
+  return out.join('\n');
+}
+function exportDefls(list, quiet){
+  if (!list.length){ msg('No deflection runs to export.','warn'); return; }
+  const name = list.length===1 ? `${cfg.prefix||'Planum'}_defl_${list[0].id}${list[0].label?'_'+list[0].label.replace(/[^\w-]/g,''):''}.csv`
+                               : `${cfg.prefix||'Planum'}_defls_${stamp(new Date()).file}.csv`;
+  download(new Blob([dfCsv(list)],{type:'text/csv'}), name);
+  if (list.length===1 && list[0].frames && list[0].frames.length){
+    const p=list[0], fn=name.replace('_defl_','_defl_frames_');
+    const lines=['run_id,t_ms,dir,label,hex,app_version', ...p.frames.map(fr=>[p.id, fr[0], fr[1], csvEsc(fr[3]), fr[2], p.version].join(','))];
+    setTimeout(()=>download(new Blob([lines.join('\n')],{type:'text/csv'}), fn), 400);
+  }
+  if (!quiet) msg('Deflection CSV saved to Downloads.','ok');
+  return name;
+}
+function startDefl(){
+  const K=dfK(cfg.defl);
+  if (K.err){ msg(K.err,'warn'); $('dfSet').open=true; $('dfTheta').focus(); return; }
+  audioUnlock(); startScan('defl');
+}
+$('dfOn').onclick=()=>dfEvent('on'); $('dfOff').onclick=()=>dfEvent('off'); $('dfMark').onclick=()=>dfEvent('mark'); $('dfZero').onclick=dfZeroNow;
+$('btnDfCsv').onclick=()=>exportDefls(defls.filter(p=>p!==SC.cur));
+$('btnDfClear').onclick=()=>{ if (SC.on) return; if (defls.length && confirm(`Delete all ${defls.length} deflection runs from this phone?`)){ defls=[]; closeDView(); saveDefls(); renderDefls(); msg('Deflection runs deleted.'); } };
+(function(){
+  const c=cfg.defl;
+  $('dfLabel').value=c.label; $('dfLabel').addEventListener('change', e=>{ c.label=e.target.value.trim().slice(0,40); e.target.value=c.label; saveCfg(); });
+  $('dfTheta').value = c.theta ?? '';
+  $('dfTheta').addEventListener('change', e=>{ const v=parseFloat(e.target.value);
+    if (!isFinite(v) || v===0 || Math.abs(v)>90){ c.theta=null; e.target.value=''; }
+    else { if (v<0){ c.dir='down'; $('dfDir').value='down'; } c.theta=+Math.abs(v).toFixed(3); e.target.value=c.theta; }   // the meter reads negative when pointing down
+    saveCfg(); dfShowFactor(); });
+  $('dfSlope').value=c.slope; $('dfSlope').addEventListener('change', e=>{ const v=parseFloat(e.target.value); c.slope = isFinite(v) ? Math.max(-100, Math.min(100, v)) : 0; e.target.value=c.slope; saveCfg(); dfShowFactor(); });
+  for (const [id,key] of [['dfDir','dir'],['dfTarget','target'],['dfStore','store']]){ $(id).value=c[key]; $(id).onchange=e=>{ c[key]=e.target.value; saveCfg(); dfShowFactor(); }; }
+  const num=(id,key,min,max,dflt)=>{ const el=$(id); el.value=c[key]; el.addEventListener('change', ()=>{ let v=parseFloat(el.value); if (!(v>=min)) v=dflt; if (v>max) v=max; c[key]=v; el.value=v; saveCfg(); }); };
+  num('dfWarm','warm',0,600,60); num('dfZw','zw',1,120,10); num('dfMax','maxMin',0.1,1440,60);
+  $('dfAuto').checked=c.autoSave; $('dfAuto').onchange=e=>{ c.autoSave=e.target.checked; saveCfg(); };
+  $('dvRaw').checked=DF.raw;
+  if (store.get('dfSetOpen', true)===true) $('dfSet').open=true;
+  $('dfSet').addEventListener('toggle', ()=>store.set('dfSetOpen', $('dfSet').open));
+  if (store.get('deflHelpOpen', false)===true) $('deflHelp').open=true;
+  $('deflHelp').addEventListener('toggle', ()=>store.set('deflHelpOpen', $('deflHelp').open));
+})();
+dfShowFactor(); renderDefls();
+
 // ---------- CSV ----------
 function exportFrames(){
   if (!rframes.length) return null;
@@ -2397,22 +2819,22 @@ $('qQuick').addEventListener('click', ()=>{ if (!photoOn() || cfg.source==='brow
 $('qFull').addEventListener('click', ()=>{ if (!photoOn() || cfg.source==='app') return; cfg.source='app'; saveCfg(); applyCamMode(); });
 // the reading area shows what belongs to the tab: Spot = latest reading; Profile/Scan = blank until a run starts
 function readout(t){
-  document.body.classList.remove('t-spot','t-profile','t-scan'); document.body.classList.add('t-'+t);
+  document.body.classList.remove('t-spot','t-profile','t-scan','t-defl'); document.body.classList.add('t-'+t);
   if (SC.on || PR.on) return;
   if (t==='spot'){ const r=log[log.length-1]; if (r){ showReading(r); return; } }
-  $('rDist').innerHTML='–<small>'+(t==='profile'?'mm':'m')+'</small>'; $('rAng').textContent='–'; $('rAngL').textContent='angle'; $('rSub').textContent='';
+  $('rDist').innerHTML='–<small>'+(t==='profile'||t==='defl'?'mm':'m')+'</small>'; $('rAng').textContent='–'; $('rAngL').textContent=t==='defl'?'peak, mm':'angle'; $('rSub').textContent='';
 }
 function setTab(t){
   if (t===S.tab || ((SC.on || PR.on) && t!==S.tab)) return;
   S.tab=t; readout(t);
-  for (const [id,pid,k] of [['tabSpot','panSpot','spot'],['tabProfile','panProfile','profile'],['tabScan','panScan','scan']]){
+  for (const [id,pid,k] of [['tabSpot','panSpot','spot'],['tabProfile','panProfile','profile'],['tabScan','panScan','scan'],['tabDefl','panDefl','defl']]){
     $(id).setAttribute('aria-selected', String(k===t)); $(id).tabIndex = k===t ? 0 : -1; $(pid).hidden = k!==t; }
   applyCamMode(); scanButtons();
 }
-$('tabSpot').onclick=()=>setTab('spot'); $('tabProfile').onclick=()=>setTab('profile'); $('tabScan').onclick=()=>setTab('scan');
+$('tabSpot').onclick=()=>setTab('spot'); $('tabProfile').onclick=()=>setTab('profile'); $('tabScan').onclick=()=>setTab('scan'); $('tabDefl').onclick=()=>setTab('defl');
 $('tabSpot').parentElement.addEventListener('keydown', e=>{          // arrow keys move between tabs
-  const order=['spot','profile','scan'], i=order.indexOf(S.tab), d = e.key==='ArrowRight' ? 1 : e.key==='ArrowLeft' ? -1 : 0;
-  if (!d) return; e.preventDefault(); setTab(order[(i+d+3)%3]); $({spot:'tabSpot',profile:'tabProfile',scan:'tabScan'}[S.tab]).focus(); });
+  const order=['spot','profile','scan','defl'], i=order.indexOf(S.tab), d = e.key==='ArrowRight' ? 1 : e.key==='ArrowLeft' ? -1 : 0;
+  if (!d) return; e.preventDefault(); setTab(order[(i+d+4)%4]); $({spot:'tabSpot',profile:'tabProfile',scan:'tabScan',defl:'tabDefl'}[S.tab]).focus(); });
 function applyCamMode(){
   const full=cfg.source==='app', on=photoOn(), spot=S.tab==='spot';
   setAppMode(!browserCam());                                         // no live view: Full, photos off, or Profile/Scan tab
@@ -2437,6 +2859,7 @@ function viewNote(){
   const help=id=>$(id).querySelector('.h1').innerHTML;
   if (S.tab==='profile') d.innerHTML=help('profHelp');
   else if (S.tab==='scan') d.innerHTML=help('scanHelp');
+  else if (S.tab==='defl') d.innerHTML=help('deflHelp');
   else d.textContent = !cfg.photo ? 'Photo is off.' : full ? 'Press Measure to open the camera app.' : '';
   el.replaceChildren(d);
 }
